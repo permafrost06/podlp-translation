@@ -24,6 +24,13 @@
     --input: 240 5.9% 90%;
     --ring: 240 10% 3.9%;
     --radius: 0.5rem;
+    /* Opaque zebra rows + active column for the grid (must be solid so
+       horizontally-scrolled cells never show through sticky columns). */
+    --row: 0 0% 100%;
+    --row-alt: 240 4.8% 97.5%;
+    --row-active: 220 90% 96%;
+    --row-active-alt: 220 80% 94%;
+    --grid-head: 240 5% 94%;
   }
 
   .dark {
@@ -46,6 +53,31 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
+    --row: 240 10% 5.5%;
+    --row-alt: 240 8% 8.5%;
+    --row-active: 240 30% 12%;
+    --row-active-alt: 240 28% 14.5%;
+    --grid-head: 240 6% 12%;
+  }
+}
+
+@layer components {
+  /* Opaque grid backgrounds. Applied per-cell so sticky columns fully cover
+     content scrolled underneath them. */
+  .grid-head-cell {
+    background-color: hsl(var(--grid-head));
+  }
+  .row-cell {
+    background-color: hsl(var(--row));
+  }
+  .row-cell-alt {
+    background-color: hsl(var(--row-alt));
+  }
+  .row-cell-active {
+    background-color: hsl(var(--row-active));
+  }
+  .row-cell-active-alt {
+    background-color: hsl(var(--row-active-alt));
   }
 }
 

@@ -120,6 +120,13 @@ app.get("/api/schema", requireAuth, (req, res) => {
   res.json({ languages: LANGUAGES, schema: SCHEMA });
 });
 
+// Get translations for all languages at once (for the grid view).
+app.get("/api/translations", requireAuth, (req, res) => {
+  const all = {};
+  for (const code of LANG_CODES) all[code] = DATA[code] || {};
+  res.json({ translations: all });
+});
+
 // Get translations for a language.
 app.get("/api/translations/:lang", requireAuth, (req, res) => {
   const lang = req.params.lang;

@@ -88,6 +88,12 @@ export const api = {
     return request("GET", `/api/translations/${lang}`);
   },
 
+  async allTranslations(): Promise<{
+    translations: Record<string, Translations>;
+  }> {
+    return request("GET", `/api/translations`);
+  },
+
   async saveTranslations(
     lang: string,
     translations: Translations

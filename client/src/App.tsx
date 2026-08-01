@@ -13,23 +13,18 @@ import {
 import {
   api,
   type Language,
+  type ProgressResponse,
   type SchemaItem,
   type Translations,
 } from "@/lib/api";
 import { LoginView } from "@/components/LoginView";
-import { StringRow } from "@/components/StringRow";
+import { TranslationGrid } from "@/components/TranslationGrid";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
@@ -37,8 +32,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-const RTL_LANGS = new Set(["ur"]);
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -46,22 +46,27 @@ export default function App() {
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [languages, setLanguages] = useState<Language[]>([]);
   const [schema, setSchema] = useState<SchemaItem[]>([]);
-  const [lang, setLang] = useState<string>("");
-  const [translations, setTranslations] = useState<Translations>({});
+  const [allTranslations, setAllTranslations] = useState<
+    Record<string, Translations>
+  >({});
+  const [activeLang, setActiveLang] = useState<string>("");
+  const [visibleLangs, setVisibleLangs] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState("");
   const [untranslatedOnly, setUntranslatedOnly] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
-  const [progress, setProgress] = useState<{ done: number; total: number }>({
-    done: 0,
+  const [progress, setProgress] = useState<ProgressResponse>({
     total: 0,
+    byLanguage: {},
   });
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewText, setPreviewText] = useState("");
 
   const dirtyRef = useRef<Set<string>>(new Set());
   const saveTimer = useRef<number | null>(null);
-  const translationsRef = useRef<Translations>({});
-  translationsRef.current = translations;
+  const allRef = useRef<Record<string, Translations>>({});
+  allRef.current = allTranslations;
+  const activeRef = useRef<string>("");
+  activeRef.current = activeLang;
 
   // ---- session check ----
   useEffect(() => {
@@ -71,48 +76,51 @@ export default function App() {
       .catch(() => setAuthed(false));
   }, []);
 
-  // ---- load schema once authed ----
+  // ---- load everything once authed ----
   const bootstrap = useCallback(async () => {
-    const { languages, schema } = await api.schema();
+    const [{ languages, schema }, { translations }, prog] = await Promise.all([
+      api.schema(),
+      api.allTranslations(),
+      api.progress(),
+    ]);
     setLanguages(languages);
     setSchema(schema);
-    setLang((cur) => cur || languages[0]?.code || "");
+    setAllTranslations(translations);
+    setProgress(prog);
+    setVisibleLangs(new Set(languages.map((l) => l.code)));
+    setActiveLang((cur) => cur || languages[0]?.code || "");
   }, []);
 
   useEffect(() => {
     if (authed) bootstrap();
   }, [authed, bootstrap]);
 
-  // ---- load translations when language changes ----
-  const loadLanguage = useCallback(async (code: string) => {
-    const { translations } = await api.translations(code);
-    dirtyRef.current.clear();
-    setTranslations(translations || {});
-    const p = await api.progress();
-    setProgress(p.byLanguage[code] || { done: 0, total: p.total });
+  // ---- saving (writes to active language) ----
+  const refreshProgress = useCallback(async () => {
+    try {
+      setProgress(await api.progress());
+    } catch {
+      /* ignore */
+    }
   }, []);
 
-  useEffect(() => {
-    if (lang) loadLanguage(lang);
-  }, [lang, loadLanguage]);
-
-  // ---- saving ----
   const flushSave = useCallback(async () => {
     const keys = Array.from(dirtyRef.current);
     if (!keys.length) return;
+    const lang = activeRef.current;
+    const langData = allRef.current[lang] || {};
     const payload: Translations = {};
-    for (const k of keys) payload[k] = translationsRef.current[k];
+    for (const k of keys) payload[k] = langData[k];
     dirtyRef.current.clear();
     try {
       await api.saveTranslations(lang, payload);
       setSaveStatus("saved");
-      const p = await api.progress();
-      setProgress(p.byLanguage[lang] || { done: 0, total: p.total });
+      refreshProgress();
     } catch (e) {
       if (e instanceof api.UnauthorizedError) setAuthed(false);
       else setSaveStatus("error");
     }
-  }, [lang]);
+  }, [refreshProgress]);
 
   const queueSave = useCallback(
     (key: string) => {
@@ -124,10 +132,14 @@ export default function App() {
     [flushSave]
   );
 
-  // ---- change handlers ----
+  // ---- change handlers (mutate active language) ----
   const onChangeString = useCallback(
     (key: string, value: string) => {
-      setTranslations((prev) => ({ ...prev, [key]: value }));
+      const lang = activeRef.current;
+      setAllTranslations((prev) => ({
+        ...prev,
+        [lang]: { ...prev[lang], [key]: value },
+      }));
       queueSave(key);
     },
     [queueSave]
@@ -135,47 +147,51 @@ export default function App() {
 
   const onChangeArray = useCallback(
     (key: string, idx: number, value: string, length: number) => {
-      setTranslations((prev) => {
-        const existing = Array.isArray(prev[key])
-          ? [...(prev[key] as string[])]
+      const lang = activeRef.current;
+      setAllTranslations((prev) => {
+        const langData = prev[lang] || {};
+        const existing = Array.isArray(langData[key])
+          ? [...(langData[key] as string[])]
           : new Array(length).fill("");
         existing[idx] = value;
-        return { ...prev, [key]: existing };
+        return { ...prev, [lang]: { ...langData, [key]: existing } };
       });
       queueSave(key);
     },
     [queueSave]
   );
 
-  const getValue = useCallback(
-    (key: string) => (translations[key] as string) || "",
-    [translations]
-  );
-  const getArrayValue = useCallback(
-    (key: string, idx: number) => {
-      const v = translations[key];
-      return Array.isArray(v) ? v[idx] || "" : "";
+  const handleSetActiveLang = useCallback(
+    async (code: string) => {
+      await flushSave();
+      setActiveLang(code);
+      // Make sure the active column is visible.
+      setVisibleLangs((prev) => {
+        if (prev.has(code)) return prev;
+        const next = new Set(prev);
+        next.add(code);
+        return next;
+      });
     },
-    [translations]
+    [flushSave]
   );
 
   // ---- filtering ----
   const isFullyTranslated = useCallback(
-    (item: SchemaItem) => {
+    (item: SchemaItem, lang: string) => {
       if (!item.translatable) return true;
+      const t = allTranslations[lang] || {};
       if (item.type === "string") {
-        const v = translations[item.key];
+        const v = t[item.key];
         return v != null && String(v).trim() !== "";
       }
-      const arr = Array.isArray(translations[item.key])
-        ? (translations[item.key] as string[])
-        : [];
+      const arr = Array.isArray(t[item.key]) ? (t[item.key] as string[]) : [];
       return item.items.every((_, i) => arr[i] && arr[i].trim() !== "");
     },
-    [translations]
+    [allTranslations]
   );
 
-  const visible = useMemo(() => {
+  const visibleSchema = useMemo(() => {
     const f = filter.trim().toLowerCase();
     return schema.filter((item) => {
       if (f) {
@@ -188,37 +204,48 @@ export default function App() {
         ).toLowerCase();
         if (!hay.includes(f)) return false;
       }
-      if (untranslatedOnly && isFullyTranslated(item)) return false;
+      if (untranslatedOnly && isFullyTranslated(item, activeLang)) return false;
       return true;
     });
-  }, [schema, filter, untranslatedOnly, isFullyTranslated]);
+  }, [schema, filter, untranslatedOnly, isFullyTranslated, activeLang]);
+
+  const shownLanguages = useMemo(
+    () => languages.filter((l) => visibleLangs.has(l.code)),
+    [languages, visibleLangs]
+  );
+
+  // ---- column toggles ----
+  function toggleLang(code: string) {
+    setVisibleLangs((prev) => {
+      const next = new Set(prev);
+      if (next.has(code)) {
+        if (code === activeLang) return prev; // don't hide the active column
+        next.delete(code);
+      } else {
+        next.add(code);
+      }
+      return next;
+    });
+  }
 
   // ---- actions ----
-  async function handleLangChange(code: string) {
-    await flushSave();
-    setLang(code);
-  }
-
   async function openPreview() {
     await flushSave();
-    setPreviewText(await api.preview(lang));
+    setPreviewText(await api.preview(activeLang));
     setPreviewOpen(true);
   }
-
   async function download() {
     await flushSave();
-    window.location.href = api.downloadUrl(lang);
+    window.location.href = api.downloadUrl(activeLang);
   }
-
   async function downloadAll() {
     await flushSave();
     window.location.href = api.downloadAllUrl();
   }
-
   async function logout() {
     await api.logout();
     setAuthed(false);
-    setTranslations({});
+    setAllTranslations({});
   }
 
   // ---- render ----
@@ -229,38 +256,44 @@ export default function App() {
       </div>
     );
   }
+  if (!authed) return <LoginView onSuccess={() => setAuthed(true)} />;
 
-  if (!authed) {
-    return <LoginView onSuccess={() => setAuthed(true)} />;
-  }
-
-  const rtl = RTL_LANGS.has(lang);
-  const pct = progress.total
-    ? Math.round((progress.done / progress.total) * 100)
+  const activeProg = progress.byLanguage[activeLang] || {
+    done: 0,
+    total: progress.total,
+  };
+  const activePct = activeProg.total
+    ? Math.round((activeProg.done / activeProg.total) * 100)
     : 0;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex h-screen flex-col bg-background">
       {/* Topbar */}
-      <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto flex max-w-4xl flex-wrap items-center gap-3 px-4 py-3">
+      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex flex-wrap items-center gap-3 px-4 py-3">
           <div className="flex items-center gap-2 font-semibold">
             <Languages className="h-5 w-5 text-primary" />
             PodLP Translation
           </div>
 
-          <Select value={lang} onValueChange={handleLangChange}>
-            <SelectTrigger className="w-[190px]">
-              <SelectValue placeholder="Language" />
-            </SelectTrigger>
-            <SelectContent>
-              {languages.map((l) => (
-                <SelectItem key={l.code} value={l.code}>
-                  {l.name} ({l.native})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>Editing:</span>
+            <Select value={activeLang} onValueChange={handleSetActiveLang}>
+              <SelectTrigger className="h-8 w-[180px]">
+                <SelectValue placeholder="Language" />
+              </SelectTrigger>
+              <SelectContent>
+                {languages.map((l) => (
+                  <SelectItem key={l.code} value={l.code}>
+                    {l.name} ({l.native})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Badge variant="secondary" className="font-normal">
+              {activeProg.done}/{activeProg.total} · {activePct}%
+            </Badge>
+          </div>
 
           <SaveIndicator status={saveStatus} />
 
@@ -281,54 +314,76 @@ export default function App() {
           </div>
         </div>
 
-        {/* Progress + filters row */}
-        <div className="mx-auto flex max-w-4xl flex-wrap items-center gap-4 px-4 pb-3">
-          <div className="flex min-w-[220px] flex-1 items-center gap-3">
-            <Progress value={pct} className="max-w-xs" />
-            <span className="whitespace-nowrap text-sm text-muted-foreground">
-              {progress.done} / {progress.total} ({pct}%)
-            </span>
-          </div>
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              className="w-56 pl-8"
-              placeholder="Filter strings…"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <Switch
-              id="untranslated"
-              checked={untranslatedOnly}
-              onCheckedChange={setUntranslatedOnly}
-            />
-            <Label htmlFor="untranslated" className="text-muted-foreground">
-              Untranslated only
-            </Label>
+        {/* Column toggles + filters */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t px-4 py-2">
+          <span className="text-sm font-medium text-muted-foreground">
+            Columns:
+          </span>
+          {languages.map((l) => {
+            const checked = visibleLangs.has(l.code);
+            const isActive = l.code === activeLang;
+            const p = progress.byLanguage[l.code];
+            return (
+              <label
+                key={l.code}
+                className={cnLabel(isActive)}
+                title={isActive ? "Active column (can't hide)" : undefined}
+              >
+                <Checkbox
+                  checked={checked}
+                  disabled={isActive}
+                  onCheckedChange={() => toggleLang(l.code)}
+                />
+                <span>{l.name}</span>
+                {p && (
+                  <span className="text-xs text-muted-foreground">
+                    {Math.round((p.done / (p.total || 1)) * 100)}%
+                  </span>
+                )}
+              </label>
+            );
+          })}
+
+          <div className="ml-auto flex flex-wrap items-center gap-3">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                className="h-8 w-56 pl-8"
+                placeholder="Filter strings…"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="untranslated"
+                checked={untranslatedOnly}
+                onCheckedChange={setUntranslatedOnly}
+              />
+              <Label htmlFor="untranslated" className="text-muted-foreground">
+                Untranslated only
+              </Label>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* String list */}
-      <main className="mx-auto max-w-4xl space-y-3 px-4 py-6">
-        {visible.length === 0 ? (
+      {/* Grid */}
+      <main className="min-h-0 flex-1 p-4">
+        {visibleSchema.length === 0 ? (
           <p className="py-16 text-center text-muted-foreground">
             No strings match the current filter.
           </p>
         ) : (
-          visible.map((item) => (
-            <StringRow
-              key={item.key}
-              item={item}
-              rtl={rtl}
-              getValue={getValue}
-              getArrayValue={getArrayValue}
-              onChangeString={onChangeString}
-              onChangeArray={onChangeArray}
-            />
-          ))
+          <TranslationGrid
+            schema={visibleSchema}
+            languages={shownLanguages}
+            activeLang={activeLang}
+            allTranslations={allTranslations}
+            onSetActiveLang={handleSetActiveLang}
+            onChangeString={onChangeString}
+            onChangeArray={onChangeArray}
+          />
         )}
       </main>
 
@@ -337,7 +392,7 @@ export default function App() {
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle className="font-mono text-sm">
-              values-{lang}/strings.xml
+              values-{activeLang}/strings.xml
             </DialogTitle>
           </DialogHeader>
           <pre className="max-h-[70vh] overflow-auto whitespace-pre-wrap break-words rounded-md border bg-muted/40 p-4 font-mono text-xs">
@@ -347,6 +402,15 @@ export default function App() {
       </Dialog>
     </div>
   );
+}
+
+function cnLabel(active: boolean) {
+  return [
+    "flex items-center gap-1.5 rounded-md border px-2 py-1 text-sm",
+    active
+      ? "border-primary/40 bg-primary/10 text-foreground"
+      : "border-transparent hover:bg-muted",
+  ].join(" ");
 }
 
 function SaveIndicator({ status }: { status: SaveStatus }) {
