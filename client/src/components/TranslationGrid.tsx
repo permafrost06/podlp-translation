@@ -2,10 +2,28 @@ import { AlertTriangle, Lock, Pencil } from "lucide-react";
 
 import type { Language, SchemaItem, Translations } from "@/lib/api";
 import { getFormatSpecs, highlightSource, specsMatch } from "@/lib/format";
+import { isRich, renderHtml } from "@/lib/html";
+import { RichTextEditor } from "@/components/RichTextEditor";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+
+/** Source text: formatted markup for rich strings, highlighted code otherwise. */
+function SourceText({ value }: { value: string }) {
+  if (isRich(value)) {
+    return (
+      <div className="whitespace-pre-wrap break-words text-muted-foreground [&_a]:text-primary [&_a]:underline">
+        {renderHtml(value)}
+      </div>
+    );
+  }
+  return (
+    <div className="whitespace-pre-wrap break-words text-muted-foreground">
+      {highlightSource(value)}
+    </div>
+  );
+}
 
 const RTL_LANGS = new Set(["ur"]);
 
@@ -170,18 +188,11 @@ function Row({
         )}
       >
         {item.type === "string" ? (
-          <div className="whitespace-pre-wrap break-words text-muted-foreground">
-            {highlightSource(item.value)}
-          </div>
+          <SourceText value={item.value} />
         ) : (
           <div className="space-y-8">
             {item.items.map((src, idx) => (
-              <div
-                key={idx}
-                className="whitespace-pre-wrap break-words text-muted-foreground"
-              >
-                {highlightSource(src.value)}
-              </div>
+              <SourceText key={idx} value={src.value} />
             ))}
           </div>
         )}
@@ -256,20 +267,42 @@ function StringCell({
   rtl: boolean;
   onChange: (value: string) => void;
 }) {
+  const rich = isRich(source);
+
   if (!editable) {
-    return value ? (
+    if (!value)
+      return (
+        <span className="text-xs italic text-muted-foreground/60">empty</span>
+      );
+    return (
       <div
         dir={rtl ? "rtl" : "ltr"}
-        className={cn("whitespace-pre-wrap break-words", rtl && "text-right")}
+        className={cn(
+          "whitespace-pre-wrap break-words",
+          rtl && "text-right",
+          rich && "[&_a]:text-primary [&_a]:underline"
+        )}
       >
-        {value}
+        {rich ? renderHtml(value) : value}
       </div>
-    ) : (
-      <span className="text-xs italic text-muted-foreground/60">empty</span>
     );
   }
 
   const mismatch = !specsMatch(source, value);
+
+  if (rich) {
+    return (
+      <div>
+        <RichTextEditor value={value} rtl={rtl} onChange={onChange} />
+        {mismatch && (
+          <p className="mt-1 flex items-center gap-1 text-[11px] text-amber-500">
+            <AlertTriangle className="h-3 w-3" />
+            Keep: {getFormatSpecs(source).join(" ") || "(none)"}
+          </p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div>
