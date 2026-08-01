@@ -20,7 +20,7 @@ interface TranslationGridProps {
     key: string,
     idx: number,
     value: string,
-    length: number
+    length: number,
   ) => void;
 }
 
@@ -31,7 +31,7 @@ function valueOf(t: Translations | undefined, key: string): string {
 function arrValueOf(
   t: Translations | undefined,
   key: string,
-  idx: number
+  idx: number,
 ): string {
   const v = t?.[key];
   return Array.isArray(v) ? v[idx] || "" : "";
@@ -67,10 +67,12 @@ export function TranslationGrid({
                     "grid-head-cell sticky top-0 z-30 min-w-[240px] cursor-pointer border-b border-r px-3 py-2 text-left font-medium",
                     active
                       ? "text-foreground"
-                      : "text-muted-foreground hover:brightness-110"
+                      : "text-muted-foreground hover:brightness-110",
                   )}
                   title={
-                    active ? "Editing this language" : "Click to edit this language"
+                    active
+                      ? "Editing this language"
+                      : "Click to edit this language"
                   }
                 >
                   <div className="flex items-center gap-1.5">
@@ -133,7 +135,7 @@ function Row({
       <td
         className={cn(
           "sticky left-0 z-20 min-w-[180px] border-b border-r px-3 py-2 align-top",
-          pinnedBg
+          pinnedBg,
         )}
       >
         <div className="flex flex-col gap-1">
@@ -164,7 +166,7 @@ function Row({
       <td
         className={cn(
           "sticky left-[180px] z-20 min-w-[240px] border-b border-r px-3 py-2 align-top",
-          pinnedBg
+          pinnedBg,
         )}
       >
         {item.type === "string" ? (
@@ -172,15 +174,13 @@ function Row({
             {highlightSource(item.value)}
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-8">
             {item.items.map((src, idx) => (
-              <div key={idx} className="whitespace-pre-wrap break-words">
-                <span className="mr-1 text-[10px] text-muted-foreground">
-                  {idx + 1}.
-                </span>
-                <span className="text-muted-foreground">
-                  {highlightSource(src.value)}
-                </span>
+              <div
+                key={idx}
+                className="whitespace-pre-wrap break-words text-muted-foreground"
+              >
+                {highlightSource(src.value)}
               </div>
             ))}
           </div>
@@ -197,7 +197,7 @@ function Row({
             key={l.code}
             className={cn(
               "min-w-[240px] border-b border-r px-3 py-2 align-top",
-              active ? activeBg : pinnedBg
+              active ? activeBg : pinnedBg,
             )}
           >
             {!item.translatable ? (
@@ -214,7 +214,7 @@ function Row({
                 onChange={(v) => onChangeString(item.key, v)}
               />
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-8">
                 {item.items.map((src, idx) => {
                   const multiline =
                     src.value.length > 60 || /<br\s*\/?>/i.test(src.value);
@@ -260,10 +260,7 @@ function StringCell({
     return value ? (
       <div
         dir={rtl ? "rtl" : "ltr"}
-        className={cn(
-          "whitespace-pre-wrap break-words",
-          rtl && "text-right"
-        )}
+        className={cn("whitespace-pre-wrap break-words", rtl && "text-right")}
       >
         {value}
       </div>
