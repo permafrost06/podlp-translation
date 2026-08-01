@@ -19,6 +19,7 @@
     <string name="load_all_episodes">Load All Episodes</string>
     <string name="network_error">Network error</string>
     <string name="error_loading_podcast">Error loading podcast</string>
+    <string name="category_not_found">Category not found</string>
     <string name="no_network_connection">No network connection</string>
     <string name="menu">Menu</string>
     <string name="today">Today</string>
@@ -31,6 +32,9 @@
     <string name="large">Large</string>
     <string name="subscribe">Subscribe</string>
     <string name="sort">Sort</string>
+    <string name="sort_default">Default</string>
+    <string name="sort_newest_to_oldest">Newest to Oldest ↓</string>
+    <string name="sort_oldest_to_newest">Oldest to Newest ↑</string>
     <string name="season">Season</string>
     <string name="all_episodes">All Episodes</string>
     <string name="season_number">Season %1$d</string>
@@ -91,16 +95,21 @@
     <string name="export_subscriptions">Export Subscriptions</string>
     <string name="export_subscriptions_description">Export podcasts to OPML</string>
     <string name="clear_cache">Clear cache</string>
-     <string name="clear_cache_description">Delete all cached images and data</string>
+    <string name="clear_cache_description">Delete all cached images and data</string>
     <string name="create_contact_shortcut">Create contact</string>
-    <string name="hardware_audit_report">Hardware audit report</string>
     <string name="create_contact_shortcut_description">Create shortcut to launch PodLP from Contacts</string>
     <string name="importing_podcasts">Importing podcasts…</string>
+    <string name="progress_count" translatable="false">%1$d / %2$d</string>
     <string name="exporting_podcasts">Exporting podcasts…</string>
     <string name="import_complete_title">Import Complete</string>
     <string name="import_complete">%1$d of %2$d podcasts imported successfully</string>
     <string name="import_cancelled">Import cancelled</string>
     <string name="failed_imports">Failed to import:</string>
+    <string name="opml_no_podcasts_found">No podcasts found in OPML file</string>
+    <string name="opml_import_failed">Import failed</string>
+    <string name="opml_no_subscriptions_to_export">No subscriptions to export</string>
+    <string name="opml_could_not_retrieve_feed_urls">Could not retrieve feed URLs</string>
+    <string name="opml_export_failed">Export failed</string>
     <string name="export_complete">Exported %1$d podcasts</string>
     <string name="ok">OK</string>
     <string name="error">Error</string>
@@ -151,6 +160,7 @@
     <string name="could_not_download_episode">Could not download %1$s</string>
     <string name="download_complete">Download Complete</string>
     <string name="episode_ready_to_play">%1$s ready to play</string>
+    <string name="episode">Episode</string>
     <string name="auto_download">Auto-download</string>
     <string name="auto_download_description">Automatically download new episodes for subscriptions</string>
     <string name="episodes_to_retain">Episodes to retain</string>
@@ -180,6 +190,7 @@
     <string name="funding">Support podcast</string>
     <string name="options">Options</string>
     <string name="not_supported">Not Supported</string>
+    <string name="no_contacts_app_available">No contacts app available</string>
     <string name="percentage_format">%1$d%%</string>
     <string name="speed_format">%1$sx</string>
     <string name="persistent_notification">Shortcut notification</string>
@@ -199,4 +210,11 @@
     <string name="show_notes">Show notes</string>
     <string name="podcast_description">Podcast description</string>
     <string name="search_episodes">Search Episodes</string>
+    <string name="unknown_episode">Unknown episode</string>
+    <string name="playback_network_error">Network error. Check your connection.</string>
+    <string name="playback_file_not_found">Episode file not found. Re-download and try again.</string>
+    <string name="playback_format_unsupported">This episode format is not supported.</string>
+    <string name="playback_download_corrupted">Downloaded episode may be corrupted. Try re-downloading.</string>
+    <string name="playback_stream_unavailable">Unable to stream. Try again later.</string>
+    <string name="playback_error">Playback error: %1$s</string>
 </resources>
