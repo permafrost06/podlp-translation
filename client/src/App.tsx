@@ -53,6 +53,7 @@ export default function App() {
   const [visibleLangs, setVisibleLangs] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState("");
   const [untranslatedOnly, setUntranslatedOnly] = useState(false);
+  const [showUntranslatable, setShowUntranslatable] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [progress, setProgress] = useState<ProgressResponse>({
     total: 0,
@@ -194,6 +195,7 @@ export default function App() {
   const visibleSchema = useMemo(() => {
     const f = filter.trim().toLowerCase();
     return schema.filter((item) => {
+      if (!showUntranslatable && !item.translatable) return false;
       if (f) {
         const hay = (
           item.name +
@@ -207,7 +209,14 @@ export default function App() {
       if (untranslatedOnly && isFullyTranslated(item, activeLang)) return false;
       return true;
     });
-  }, [schema, filter, untranslatedOnly, isFullyTranslated, activeLang]);
+  }, [
+    schema,
+    filter,
+    untranslatedOnly,
+    showUntranslatable,
+    isFullyTranslated,
+    activeLang,
+  ]);
 
   const shownLanguages = useMemo(
     () => languages.filter((l) => visibleLangs.has(l.code)),
@@ -362,6 +371,19 @@ export default function App() {
               />
               <Label htmlFor="untranslated" className="text-muted-foreground">
                 Untranslated only
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="show-untranslatable"
+                checked={showUntranslatable}
+                onCheckedChange={setShowUntranslatable}
+              />
+              <Label
+                htmlFor="show-untranslatable"
+                className="text-muted-foreground"
+              >
+                Show untranslatable
               </Label>
             </div>
           </div>
