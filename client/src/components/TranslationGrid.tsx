@@ -1,7 +1,17 @@
+import { useState } from "react";
 import { AlertTriangle, Lock, Pencil } from "lucide-react";
 
 import type { Language, SchemaItem, Translations } from "@/lib/api";
-import { getFormatSpecs, highlightSource, specsMatch } from "@/lib/format";
+import {
+  applyFormat,
+  defaultArgsFor,
+  getFormatArgs,
+  getFormatSpecs,
+  hasFormatArgs,
+  highlightSource,
+  specsMatch,
+  type FormatArg,
+} from "@/lib/format";
 import { isRich, renderHtml } from "@/lib/html";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +36,90 @@ function SourceText({ value }: { value: string }) {
 }
 
 const RTL_LANGS = new Set(["ur"]);
+
+/** App language codes are already valid BCP-47 primary subtags. */
+function localeFor(code: string): string {
+  return code;
+}
+
+/** Editable sample-value inputs, one per positional format argument. */
+function ArgInputs({
+  args,
+  values,
+  onChange,
+}: {
+  args: FormatArg[];
+  values: Record<number, string>;
+  onChange: (position: number, value: string) => void;
+}) {
+  return (
+    <div className="mt-2 flex flex-col gap-1.5 border-t border-dashed pt-2">
+      {args.map((arg) => (
+        <label
+          key={arg.position}
+          className="flex items-center gap-2 text-[11px] text-muted-foreground"
+        >
+          <code className="shrink-0 rounded bg-amber-500/15 px-1 py-0.5 font-mono text-amber-500">
+            {arg.raw}
+          </code>
+          <Input
+            className="h-7 bg-background text-xs"
+            placeholder={CONVERSION_HINT[arg.conversion] ?? "value"}
+            value={values[arg.position] ?? ""}
+            onChange={(e) => onChange(arg.position, e.target.value)}
+          />
+        </label>
+      ))}
+    </div>
+  );
+}
+
+const CONVERSION_HINT: Record<string, string> = {
+  s: "text…",
+  d: "number…",
+  i: "number…",
+  f: "decimal…",
+  e: "decimal…",
+  g: "decimal…",
+  x: "hex number…",
+  o: "octal number…",
+  c: "character…",
+  b: "true / false",
+};
+
+/** Live preview of a format string with sample values substituted in. */
+function FormatPreview({
+  text,
+  values,
+  locale,
+  rich,
+  rtl,
+}: {
+  text: string;
+  values: Record<number, string>;
+  locale: string;
+  rich: boolean;
+  rtl?: boolean;
+}) {
+  const preview = applyFormat(text, values, locale);
+  return (
+    <div className="mt-2 rounded-md border bg-muted/40 px-2 py-1.5">
+      <div className="mb-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+        Preview
+      </div>
+      <div
+        dir={rtl ? "rtl" : "ltr"}
+        className={cn(
+          "whitespace-pre-wrap break-words text-xs",
+          rtl && "text-right",
+          rich && "[&_a]:text-primary [&_a]:underline",
+        )}
+      >
+        {rich ? renderHtml(preview) : preview}
+      </div>
+    </div>
+  );
+}
 
 interface TranslationGridProps {
   schema: SchemaItem[];
@@ -209,6 +303,16 @@ function Row({
   const isArrayItem = row.kind === "array-item";
   const isCdataString = row.kind === "string" && row.cdata;
 
+  // Sample values for the source's format arguments, shared between the
+  // English preview and the active translation preview.
+  const formatArgs = getFormatArgs(row.source);
+  const [argValues, setArgValues] = useState<Record<number, string>>(() =>
+    defaultArgsFor(row.key, row.source),
+  );
+  const setArg = (position: number, value: string) =>
+    setArgValues((prev) => ({ ...prev, [position]: value }));
+  const sourceRich = isRich(row.source);
+
   function currentValue(t: Translations | undefined): string {
     return isArrayItem ? arrValueOf(t, row.key, row.index) : valueOf(t, row.key);
   }
@@ -258,6 +362,21 @@ function Row({
         )}
       >
         <SourceText value={row.source} />
+        {formatArgs.length > 0 && (
+          <>
+            <ArgInputs
+              args={formatArgs}
+              values={argValues}
+              onChange={setArg}
+            />
+            <FormatPreview
+              text={row.source}
+              values={argValues}
+              locale={localeFor("en")}
+              rich={sourceRich}
+            />
+          </>
+        )}
       </td>
 
       {/* Language columns */}
@@ -285,6 +404,8 @@ function Row({
                 editable={active}
                 rtl={rtl}
                 onChange={change}
+                argValues={active ? argValues : undefined}
+                locale={localeFor(l.code)}
               />
             )}
           </td>
@@ -301,6 +422,8 @@ function StringCell({
   editable,
   rtl,
   onChange,
+  argValues,
+  locale,
 }: {
   value: string;
   source: string;
@@ -308,8 +431,23 @@ function StringCell({
   editable: boolean;
   rtl: boolean;
   onChange: (value: string) => void;
+  /** Shared sample arg values (only provided for the active cell). */
+  argValues?: Record<number, string>;
+  locale: string;
 }) {
   const rich = isRich(source);
+  const showPreview =
+    editable && argValues !== undefined && hasFormatArgs(source) && !!value.trim();
+
+  const preview = showPreview ? (
+    <FormatPreview
+      text={value}
+      values={argValues}
+      locale={locale}
+      rich={rich}
+      rtl={rtl}
+    />
+  ) : null;
 
   if (!editable) {
     if (!value)
@@ -342,6 +480,7 @@ function StringCell({
             Keep: {getFormatSpecs(source).join(" ") || "(none)"}
           </p>
         )}
+        {preview}
       </div>
     );
   }
@@ -371,6 +510,7 @@ function StringCell({
           Keep: {getFormatSpecs(source).join(" ") || "(none)"}
         </p>
       )}
+      {preview}
     </div>
   );
 }
