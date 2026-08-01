@@ -55,6 +55,66 @@ function arrValueOf(
   return Array.isArray(v) ? v[idx] || "" : "";
 }
 
+/**
+ * A single grid row. Plain strings map to one row; each string-array item
+ * becomes its own row so the grid stays flat and tidy.
+ */
+type GridRow =
+  | {
+      kind: "string";
+      key: string; // storage key ("s:name")
+      name: string;
+      source: string;
+      cdata: boolean;
+      multiline: boolean;
+      translatable: boolean;
+    }
+  | {
+      kind: "array-item";
+      key: string; // storage key ("a:name")
+      name: string; // display name, e.g. "changelog [2]"
+      index: number; // item index within the array
+      length: number; // total items in the array
+      source: string;
+      multiline: boolean;
+      translatable: boolean;
+      firstOfGroup: boolean;
+      groupSize: number;
+    };
+
+function flattenSchema(schema: SchemaItem[]): GridRow[] {
+  const rows: GridRow[] = [];
+  for (const item of schema) {
+    if (item.type === "string") {
+      rows.push({
+        kind: "string",
+        key: item.key,
+        name: item.name,
+        source: item.value,
+        cdata: item.cdata,
+        multiline: item.multiline,
+        translatable: item.translatable,
+      });
+    } else {
+      item.items.forEach((src, idx) => {
+        rows.push({
+          kind: "array-item",
+          key: item.key,
+          name: `${item.name} [${idx + 1}]`,
+          index: idx,
+          length: item.items.length,
+          source: src.value,
+          multiline: src.value.length > 60 || /<br\s*\/?>/i.test(src.value),
+          translatable: item.translatable,
+          firstOfGroup: idx === 0,
+          groupSize: item.items.length,
+        });
+      });
+    }
+  }
+  return rows;
+}
+
 export function TranslationGrid({
   schema,
   languages,
@@ -106,10 +166,10 @@ export function TranslationGrid({
           </tr>
         </thead>
         <tbody>
-          {schema.map((item, i) => (
+          {flattenSchema(schema).map((row, i) => (
             <Row
-              key={item.key}
-              item={item}
+              key={row.kind === "array-item" ? `${row.key}:${row.index}` : row.key}
+              row={row}
               rowIndex={i}
               languages={languages}
               activeLang={activeLang}
@@ -125,7 +185,7 @@ export function TranslationGrid({
 }
 
 function Row({
-  item,
+  row,
   rowIndex,
   languages,
   activeLang,
@@ -133,7 +193,7 @@ function Row({
   onChangeString,
   onChangeArray,
 }: {
-  item: SchemaItem;
+  row: GridRow;
   rowIndex: number;
   languages: Language[];
   activeLang: string;
@@ -141,11 +201,21 @@ function Row({
   onChangeString: TranslationGridProps["onChangeString"];
   onChangeArray: TranslationGridProps["onChangeArray"];
 }) {
-  const isArray = item.type === "string-array";
   const alt = rowIndex % 2 === 1;
   // Opaque backgrounds so sticky columns cover scrolled content.
   const pinnedBg = alt ? "row-cell-alt" : "row-cell";
   const activeBg = alt ? "row-cell-active-alt" : "row-cell-active";
+
+  const isArrayItem = row.kind === "array-item";
+  const isCdataString = row.kind === "string" && row.cdata;
+
+  function currentValue(t: Translations | undefined): string {
+    return isArrayItem ? arrValueOf(t, row.key, row.index) : valueOf(t, row.key);
+  }
+  function change(value: string) {
+    if (isArrayItem) onChangeArray(row.key, row.index, value, row.length);
+    else onChangeString(row.key, value);
+  }
 
   return (
     <tr className="align-top">
@@ -158,20 +228,20 @@ function Row({
       >
         <div className="flex flex-col gap-1">
           <span className="break-all font-mono text-xs text-primary/80">
-            {item.name}
+            {row.name}
           </span>
           <div className="flex flex-wrap gap-1">
-            {!item.translatable && (
+            {!row.translatable && (
               <Badge variant="secondary" className="gap-1 text-[10px]">
                 <Lock className="h-2.5 w-2.5" /> fixed
               </Badge>
             )}
-            {isArray && (
+            {isArrayItem && (
               <Badge variant="outline" className="text-[10px]">
                 list
               </Badge>
             )}
-            {item.type === "string" && item.cdata && (
+            {isCdataString && (
               <Badge variant="warning" className="text-[10px]">
                 HTML
               </Badge>
@@ -187,15 +257,7 @@ function Row({
           pinnedBg,
         )}
       >
-        {item.type === "string" ? (
-          <SourceText value={item.value} />
-        ) : (
-          <div className="space-y-8">
-            {item.items.map((src, idx) => (
-              <SourceText key={idx} value={src.value} />
-            ))}
-          </div>
-        )}
+        <SourceText value={row.source} />
       </td>
 
       {/* Language columns */}
@@ -211,39 +273,19 @@ function Row({
               active ? activeBg : pinnedBg,
             )}
           >
-            {!item.translatable ? (
+            {!row.translatable ? (
               <span className="text-xs italic text-muted-foreground">
                 (not translated)
               </span>
-            ) : item.type === "string" ? (
+            ) : (
               <StringCell
-                value={valueOf(t, item.key)}
-                source={item.value}
-                multiline={item.multiline}
+                value={currentValue(t)}
+                source={row.source}
+                multiline={row.multiline}
                 editable={active}
                 rtl={rtl}
-                onChange={(v) => onChangeString(item.key, v)}
+                onChange={change}
               />
-            ) : (
-              <div className="space-y-8">
-                {item.items.map((src, idx) => {
-                  const multiline =
-                    src.value.length > 60 || /<br\s*\/?>/i.test(src.value);
-                  return (
-                    <StringCell
-                      key={idx}
-                      value={arrValueOf(t, item.key, idx)}
-                      source={src.value}
-                      multiline={multiline}
-                      editable={active}
-                      rtl={rtl}
-                      onChange={(v) =>
-                        onChangeArray(item.key, idx, v, item.items.length)
-                      }
-                    />
-                  );
-                })}
-              </div>
             )}
           </td>
         );
