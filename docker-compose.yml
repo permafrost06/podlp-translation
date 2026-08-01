@@ -1,0 +1,14 @@
+services:
+  translate:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - TRANSLATOR_PASSWORD=${TRANSLATOR_PASSWORD}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - PORT=3000
+      - DATA_FILE=/data/translations.json
+      - STRINGS_FILE=/app/strings.xml
+    volumes:
+      - ./data:/data
+    restart: unless-stopped

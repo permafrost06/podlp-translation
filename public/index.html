@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PodLP Translation Tool</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <!-- Login -->
+    <div id="login-view" class="view center hidden">
+      <form id="login-form" class="card login-card">
+        <h1>PodLP Translation</h1>
+        <p class="muted">Enter the shared password to continue.</p>
+        <input
+          id="password"
+          type="password"
+          placeholder="Password"
+          autocomplete="current-password"
+          required
+        />
+        <button type="submit">Enter</button>
+        <p id="login-error" class="error hidden"></p>
+      </form>
+    </div>
+
+    <!-- Main app -->
+    <div id="app-view" class="hidden">
+      <header class="topbar">
+        <div class="topbar-left">
+          <strong>PodLP Translation</strong>
+          <select id="lang-select" aria-label="Language"></select>
+          <span id="progress-pill" class="pill"></span>
+        </div>
+        <div class="topbar-right">
+          <input
+            id="filter"
+            type="search"
+            placeholder="Filter strings…"
+            aria-label="Filter strings"
+          />
+          <label class="checkbox">
+            <input type="checkbox" id="untranslated-only" />
+            Untranslated only
+          </label>
+          <span id="save-status" class="save-status"></span>
+          <button id="preview-btn" class="secondary">Preview XML</button>
+          <button id="download-btn" class="secondary">Download this</button>
+          <button id="download-all-btn">Download all (zip)</button>
+          <button id="logout-btn" class="ghost">Logout</button>
+        </div>
+      </header>
+
+      <main id="strings-container"></main>
+    </div>
+
+    <!-- Preview modal -->
+    <div id="preview-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <strong id="preview-title">Preview</strong>
+          <button id="preview-close" class="ghost">Close</button>
+        </div>
+        <pre id="preview-content"></pre>
+      </div>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
