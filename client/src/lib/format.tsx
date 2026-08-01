@@ -94,6 +94,7 @@ const NUMBERING_SYSTEM: Record<string, string> = {
   kn: "knda", // Kannada
   gu: "gujr", // Gujarati
   or: "orya", // Odia
+  bn: "beng", // Bengali
   ur: "arabext", // Urdu (Eastern Arabic-Indic)
 };
 
