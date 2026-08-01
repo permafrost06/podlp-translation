@@ -152,7 +152,9 @@ app.put("/api/translations/:lang", requireAuth, (req, res) => {
 // Progress summary across all languages.
 app.get("/api/progress", requireAuth, (req, res) => {
   const translatableStrings = SCHEMA.filter((i) => i.translatable && i.type === "string");
-  const translatableArrays = SCHEMA.filter((i) => i.translatable && i.type === "string-array");
+  const translatableArrays = SCHEMA.filter(
+    (i) => i.translatable && i.type === "string-array" && i.name !== "changelog"
+  );
   const totalUnits =
     translatableStrings.length +
     translatableArrays.reduce((n, a) => n + a.items.length, 0);

@@ -195,6 +195,9 @@ export default function App() {
   const visibleSchema = useMemo(() => {
     const f = filter.trim().toLowerCase();
     return schema.filter((item) => {
+      // The changelog release-notes list is not exposed to translators and its
+      // visibility is intentionally not user-toggleable.
+      if (item.type === "string-array" && item.name === "changelog") return false;
       if (!showUntranslatable && !item.translatable) return false;
       if (f) {
         const hay = (
