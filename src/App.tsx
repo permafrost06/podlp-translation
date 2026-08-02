@@ -132,7 +132,8 @@ export default function App() {
       savedVisible && savedVisible.length
         ? new Set(savedVisible.filter((c) => codes.has(c)))
         : new Set(codes);
-    if (restoredVisible.size === 0) for (const c of codes) restoredVisible.add(c);
+    if (restoredVisible.size === 0)
+      for (const c of codes) restoredVisible.add(c);
     setVisibleLangs(restoredVisible);
 
     // Restore the active language if it's still valid, otherwise pick the first.
@@ -414,25 +415,9 @@ export default function App() {
         </div>
 
         {/* Column toggles + filters */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t px-4 py-2">
-          <div className="flex items-center gap-2">
-            <Switch
-              id="show-all-languages"
-              checked={showAllLanguages}
-              onCheckedChange={setShowAllLanguages}
-            />
-            <Label
-              htmlFor="show-all-languages"
-              className="text-muted-foreground"
-            >
-              Show all languages
-            </Label>
-          </div>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-2 border-t px-4 py-2">
           {showAllLanguages && (
             <>
-              <span className="text-sm font-medium text-muted-foreground">
-                Columns:
-              </span>
               {languages.map((l) => {
                 const checked = visibleLangs.has(l.code);
                 const isActive = l.code === activeLang;
@@ -466,6 +451,19 @@ export default function App() {
           )}
 
           <div className="ml-auto flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="show-all-languages"
+                checked={showAllLanguages}
+                onCheckedChange={setShowAllLanguages}
+              />
+              <Label
+                htmlFor="show-all-languages"
+                className="text-muted-foreground"
+              >
+                Show all languages
+              </Label>
+            </div>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
