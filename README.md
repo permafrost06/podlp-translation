@@ -66,7 +66,13 @@ pnpm seed                 # -> npx convex run seed:run
 
 ## Run locally
 
-Run Convex and the Vite dev server side by side:
+Run both the Convex backend and Vite dev server together:
+
+```sh
+pnpm dev:all              # Convex + UI on http://localhost:5173
+```
+
+Or run them in separate terminals if you prefer:
 
 ```sh
 pnpm dev:convex           # terminal 1 — Convex backend (also keeps codegen fresh)
@@ -75,15 +81,23 @@ pnpm dev                  # terminal 2 — UI on http://localhost:5173
 
 Open http://localhost:5173.
 
-## Build for production
+## Build & deploy
+
+The app deploys to Netlify (see `netlify.toml`), which runs `convex deploy`
+and builds the SPA in one step:
+
+```sh
+npx convex deploy --cmd 'pnpm run build'   # push functions + build dist/
+```
+
+To build locally without deploying:
 
 ```sh
 pnpm build                # -> dist/ (static SPA)
-npx convex deploy         # push functions to your production deployment
 ```
 
-Host `dist/` on any static host (Convex, Netlify, Vercel, …). Make sure the
-production build is given the production `VITE_CONVEX_URL` at build time.
+The production build must be given the production `VITE_CONVEX_URL` at build
+time. Any static host works (Netlify, Vercel, …).
 
 ## Environment variables
 
@@ -129,8 +143,3 @@ Downloads are served by Convex HTTP Actions (`*.convex.site/download/<lang>`,
 `/download-all`, `/preview/<lang>`), authorized via a `?token=` query param.
 Drop the ZIP contents into `app/src/main/res/` and the `values-<code>/` folders
 line up with Android's locale qualifiers.
-
-## Legacy Express server
-
-The previous Node/Express implementation is preserved under `_legacy/` for
-reference and can be deleted once the Convex migration is confirmed working.
