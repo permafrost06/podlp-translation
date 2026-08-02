@@ -8,7 +8,6 @@ import {
   getFormatArgs,
   getFormatSpecs,
   hasFormatArgs,
-  highlightSource,
   specsMatch,
   type FormatArg,
 } from "@/lib/format";
@@ -30,7 +29,7 @@ function SourceText({ value }: { value: string }) {
   }
   return (
     <div className="whitespace-pre-wrap break-words text-muted-foreground">
-      {highlightSource(value)}
+      {value}
     </div>
   );
 }
