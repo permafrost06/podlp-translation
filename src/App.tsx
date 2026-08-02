@@ -380,7 +380,10 @@ export default function App() {
                 Untranslated only
               </Label>
             </div>
-            <div className="flex items-center gap-2">
+            <div
+              className="flex items-center gap-2"
+              style={{ display: "none" }}
+            >
               <Switch
                 id="show-untranslatable"
                 checked={showUntranslatable}
