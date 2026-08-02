@@ -131,7 +131,7 @@ export default function App() {
       if (saveTimer.current) window.clearTimeout(saveTimer.current);
       saveTimer.current = window.setTimeout(flushSave, 700);
     },
-    [flushSave]
+    [flushSave],
   );
 
   // ---- change handlers (mutate active language) ----
@@ -144,7 +144,7 @@ export default function App() {
       }));
       queueSave(key);
     },
-    [queueSave]
+    [queueSave],
   );
 
   const onChangeArray = useCallback(
@@ -160,7 +160,7 @@ export default function App() {
       });
       queueSave(key);
     },
-    [queueSave]
+    [queueSave],
   );
 
   const handleSetActiveLang = useCallback(
@@ -175,7 +175,7 @@ export default function App() {
         return next;
       });
     },
-    [flushSave]
+    [flushSave],
   );
 
   // ---- filtering ----
@@ -190,7 +190,7 @@ export default function App() {
       const arr = Array.isArray(t[item.key]) ? (t[item.key] as string[]) : [];
       return item.items.every((_, i) => arr[i] && arr[i].trim() !== "");
     },
-    [allTranslations]
+    [allTranslations],
   );
 
   const visibleSchema = useMemo(() => {
@@ -198,7 +198,8 @@ export default function App() {
     return schema.filter((item) => {
       // The changelog release-notes list is not exposed to translators and its
       // visibility is intentionally not user-toggleable.
-      if (item.type === "string-array" && item.name === "changelog") return false;
+      if (item.type === "string-array" && item.name === "changelog")
+        return false;
       if (!showUntranslatable && !item.translatable) return false;
       if (matchedOnly && !item.matched) return false;
       if (f) {
@@ -226,7 +227,7 @@ export default function App() {
 
   const shownLanguages = useMemo(
     () => languages.filter((l) => visibleLangs.has(l.code)),
-    [languages, visibleLangs]
+    [languages, visibleLangs],
   );
 
   // ---- column toggles ----

@@ -7,7 +7,7 @@ generate valid Android `strings.xml` files from their submissions.
 ## Target languages
 
 Hindi, Tamil, Telugu, Malayalam, Kannada, Marathi, Gujarati, Odia, Urdu.
-(Edit `lib/languages.js` to add/remove.)
+(Edit `convex/lib/languages.ts` to add/remove.)
 
 ## Features
 
@@ -20,61 +20,86 @@ Hindi, Tamil, Telugu, Malayalam, Kannada, Marathi, Gujarati, Odia, Urdu.
   the tool keeps the markup and re-wraps output in CDATA.
 - **Non-translatable strings** (brand names, URLs, pure format strings like
   `%.1fGB`) are shown read-only and copied through unchanged.
-- **Autosave** to a JSON file; nothing is lost on refresh.
+- **Autosave** to the Convex database; nothing is lost on refresh.
 - **RTL editing** for Urdu.
 - **Download** one language's `strings.xml`, or **all** as a ZIP laid out as
   `values-<code>/strings.xml` ready to drop into `app/src/main/res/`.
 
 ## Stack
 
-- **Backend**: Node + Express (`server.js`) — auth, JSON persistence, XML/ZIP
-  generation. No build step.
-- **Frontend**: React + TypeScript + Vite + Tailwind + **shadcn/ui** in
-  `client/`. Built to `client/dist`, which the server serves as static assets
-  (with an SPA fallback). If `client/dist` is missing, the server falls back to
-  the legacy static `public/` folder.
+- **Backend**: [Convex](https://convex.dev) (`convex/`) — shared-password auth
+  (`convex/auth.ts`), database persistence (`convex/schema.ts`,
+  `convex/translations.ts`), and XML/ZIP generation via HTTP Actions
+  (`convex/http.ts`).
+- **Frontend**: React + TypeScript + Vite + Tailwind + **shadcn/ui** at the repo
+  root (`src/`, `index.html`). Talks to Convex directly via the browser client
+  in `src/lib/api.ts`.
+
+The source schema (parsed from `strings.xml`) and the initial Bangla
+translations are seeded into Convex. Regenerate the static seed data with
+`node scripts/gen-schema-data.mjs` (reads `strings.xml` + `data/translations.json`).
+
+## Setup
+
+```sh
+pnpm install
+
+# One-time: create a Convex project + generate convex/_generated.
+# This opens a browser to log in and writes VITE_CONVEX_URL to .env.local.
+npx convex dev            # leave running, or Ctrl-C after it prints "ready"
+
+# Set the shared-password env vars on the deployment:
+npx convex env set TRANSLATOR_PASSWORD "your-shared-password"
+npx convex env set SESSION_SECRET "$(openssl rand -hex 32)"
+
+# Seed the source schema + existing Bangla translations:
+pnpm seed                 # -> npx convex run seed:run
+```
 
 ## Run locally
 
-Build the frontend once, then run the server:
+Run Convex and the Vite dev server side by side:
 
 ```sh
-cp .env.example .env               # then edit the password/secret
-npm install                        # server deps
-(cd client && npm install && npm run build)
-node server.js                     # http://localhost:3000
+pnpm dev:convex           # terminal 1 — Convex backend (also keeps codegen fresh)
+pnpm dev                  # terminal 2 — UI on http://localhost:5173
 ```
 
-### Frontend dev mode (hot reload)
+Open http://localhost:5173.
 
-Run the API and the Vite dev server side by side. Vite proxies `/api` to the
-backend on port 3000:
+## Build for production
 
 ```sh
-node server.js                     # terminal 1 — API on :3000
-cd client && npm run dev           # terminal 2 — UI on :5173
+pnpm build                # -> dist/ (static SPA)
+npx convex deploy         # push functions to your production deployment
 ```
 
-Open http://localhost:5173 during development.
+Host `dist/` on any static host (Convex, Netlify, Vercel, …). Make sure the
+production build is given the production `VITE_CONVEX_URL` at build time.
 
-Environment variables (see `.env.example`):
+## Environment variables
 
-| Var                   | Meaning                                    | Default              |
-| --------------------- | ------------------------------------------ | -------------------- |
-| `TRANSLATOR_PASSWORD` | Shared password for translators            | `podlp` (dev only)   |
-| `SESSION_SECRET`      | HMAC secret for the auth cookie            | random per boot      |
-| `PORT`                | HTTP port                                  | `3000`               |
-| `STRINGS_FILE`        | Path to source `strings.xml`               | `./strings.xml`      |
-| `DATA_FILE`           | Where submissions are persisted            | `./data/translations.json` |
+Client (build time, `.env.local`):
 
-## Run with Docker
+| Var               | Meaning                                    |
+| ----------------- | ------------------------------------------ |
+| `VITE_CONVEX_URL` | Convex deployment URL (set by `convex dev`) |
 
-```sh
-cp .env.example .env      # set TRANSLATOR_PASSWORD and SESSION_SECRET
-docker compose up --build
-```
+Backend (set with `npx convex env set …`):
 
-Translations persist in `./data/translations.json` (mounted volume).
+| Var                   | Meaning                          | Default            |
+| --------------------- | -------------------------------- | ------------------ |
+| `TRANSLATOR_PASSWORD` | Shared password for translators  | `podlp` (dev only) |
+| `SESSION_SECRET`      | HMAC secret for the auth token   | insecure dev value |
+
+## Auth model
+
+There are **no per-user accounts** — a single shared password gates access
+(matching the original tool). A correct password returns a stateless
+HMAC-signed token that the browser stores in `localStorage` and passes to every
+protected query/mutation/HTTP Action, where it is re-validated. To rotate
+access, change `TRANSLATOR_PASSWORD` (and optionally `SESSION_SECRET` to
+invalidate all existing tokens).
 
 ## How output is generated
 
@@ -92,5 +117,12 @@ Note: the source has both a `<string name="changelog">` and a
 `<string-array name="changelog">`. Storage keys are namespaced (`s:` for
 strings, `a:` for arrays) so they never collide.
 
+Downloads are served by Convex HTTP Actions (`*.convex.site/download/<lang>`,
+`/download-all`, `/preview/<lang>`), authorized via a `?token=` query param.
 Drop the ZIP contents into `app/src/main/res/` and the `values-<code>/` folders
 line up with Android's locale qualifiers.
+
+## Legacy Express server
+
+The previous Node/Express implementation is preserved under `_legacy/` for
+reference and can be deleted once the Convex migration is confirmed working.
