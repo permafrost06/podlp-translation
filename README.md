@@ -4,6 +4,8 @@ A small password-gated web app that lets translators (who don't touch code)
 translate the PodLP Android `strings.xml` into Indian languages, and lets you
 generate valid Android `strings.xml` files from their submissions.
 
+![Screenshot of the PodLP Translation tool](screenshot.png)
+
 ## Target languages
 
 Hindi, Tamil, Telugu, Malayalam, Kannada, Marathi, Gujarati, Odia, Urdu.
