@@ -10,9 +10,9 @@ It's a small password-gated web app that lets translators (who don't touch code)
 translate the PodLP Android `strings.xml` into Indian languages, and generates
 valid Android `strings.xml` files from their submissions.
 
-![Screenshot of the PodLP Translation tool](screenshot.png)
+![Screenshot of the PodLP Translation tool](screenshots/screenshot-app.png)
 
-![Screenshot of the strings.xml preview](screenshot-preview.png)
+![Screenshot of the strings.xml preview](screenshots/screenshot-preview.png)
 
 ## Target languages
 
@@ -24,13 +24,27 @@ Hindi, Tamil, Telugu, Malayalam, Kannada, Marathi, Gujarati, Odia, Urdu.
 - **Single shared password** - best auth solution for this one-time
   project with many non-techie translators, less hassle since no per-user
   accounts to manage.
+
+  ![Shared-password login screen](screenshots/feature-login.png)
+
 - **Preview for strings with args** - strings with placeholders replaced
   by a sample changeable value, and warns if a placeholder goes missing.
+
+  ![String with format args and a live preview](screenshots/feature-args.png)
+
 - **Rich-text editing** converted to HTML under the hood and wrapped in CDATA
   as needed.
+
+  ![Rich-text editor with bold/italic/underline/link toolbar](screenshots/feature-richtext.png)
+
 - **Convex live updates and stats** — track translation progress live.
+
+  ![Header showing live per-language progress](screenshots/feature-stats.png)
+
 - **Generate all required XML files easily** — one language or all of them at
   once.
+
+  ![Generated values-bn/strings.xml preview](screenshots/feature-generate.png)
 
 ## Setup & run
 
