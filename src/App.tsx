@@ -525,7 +525,7 @@ export default function App() {
 
       {/* Preview dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-[80vw]">
           <DialogHeader>
             <DialogTitle className="font-mono text-sm">
               values-{activeLang}/strings.xml
