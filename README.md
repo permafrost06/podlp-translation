@@ -1,8 +1,14 @@
 # PodLP Translation Tool
 
-A small password-gated web app that lets translators (who don't touch code)
-translate the PodLP Android `strings.xml` into Indian languages, and lets you
-generate valid Android `strings.xml` files from their submissions.
+I needed translations for an Android app. The translators couldn't deliver XML,
+and it was too much work converting the different kinds of text (including RTL)
+into XML by hand. On top of that, they kept getting tripped up by things like
+HTML syntax and placeholders such as `%1$d`. So I just built a simple
+translation app.
+
+It's a small password-gated web app that lets translators (who don't touch code)
+translate the PodLP Android `strings.xml` into Indian languages, and generates
+valid Android `strings.xml` files from their submissions.
 
 ![Screenshot of the PodLP Translation tool](screenshot.png)
 
