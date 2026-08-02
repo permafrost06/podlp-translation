@@ -340,15 +340,19 @@ export default function App() {
             const isActive = l.code === activeLang;
             const p = progress.byLanguage[l.code];
             return (
-              <label
+              <span
                 key={l.code}
                 className={cnLabel(isActive)}
                 title={isActive ? "Active column (can't hide)" : undefined}
+                onClick={() => {
+                  if (!isActive) toggleLang(l.code);
+                }}
+                style={{ cursor: isActive ? "default" : "pointer" }}
               >
                 <Checkbox
                   checked={checked}
                   disabled={isActive}
-                  onCheckedChange={() => toggleLang(l.code)}
+                  onCheckedChange={() => {}}
                 />
                 <span>{l.name}</span>
                 {p && (
@@ -356,7 +360,7 @@ export default function App() {
                     {Math.round((p.done / (p.total || 1)) * 100)}%
                   </span>
                 )}
-              </label>
+              </span>
             );
           })}
 
