@@ -389,7 +389,8 @@ export default function App() {
               </SelectContent>
             </Select>
             <Badge variant="secondary" className="font-normal">
-              {activeProg.done}/{activeProg.total} · {activePct}%
+              {activeProg.done}/{activeProg.total} · {activePct}% ·{" "}
+              {activeProg.total - activeProg.done} blank
             </Badge>
           </div>
 
@@ -454,7 +455,8 @@ export default function App() {
                     <span>{l.name}</span>
                     {p && (
                       <span className="text-xs text-muted-foreground">
-                        {Math.round((p.done / (p.total || 1)) * 100)}%
+                        {Math.round((p.done / (p.total || 1)) * 100)}% ·{" "}
+                        {p.total - p.done} blank
                       </span>
                     )}
                   </span>
