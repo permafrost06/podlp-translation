@@ -414,7 +414,7 @@ function Row({
                 editable={active}
                 rtl={rtl}
                 onChange={change}
-                argValues={active ? argValues : undefined}
+                argValues={argValues}
                 locale={localeFor(l.code)}
               />
             )}
@@ -441,16 +441,13 @@ function StringCell({
   editable: boolean;
   rtl: boolean;
   onChange: (value: string) => void;
-  /** Shared sample arg values (only provided for the active cell). */
+  /** Shared sample arg values used to render the format preview. */
   argValues?: Record<number, string>;
   locale: string;
 }) {
   const rich = isRich(source);
   const showPreview =
-    editable &&
-    argValues !== undefined &&
-    hasFormatArgs(source) &&
-    !!value.trim();
+    argValues !== undefined && hasFormatArgs(source) && !!value.trim();
 
   const preview = showPreview ? (
     <FormatPreview
@@ -468,15 +465,18 @@ function StringCell({
         <span className="text-xs italic text-muted-foreground/60">empty</span>
       );
     return (
-      <div
-        dir={rtl ? "rtl" : "ltr"}
-        className={cn(
-          "whitespace-pre-wrap break-words",
-          rtl && "text-right",
-          rich && "[&_a]:text-primary [&_a]:underline",
-        )}
-      >
-        {rich ? renderHtml(value) : value}
+      <div>
+        <div
+          dir={rtl ? "rtl" : "ltr"}
+          className={cn(
+            "whitespace-pre-wrap break-words",
+            rtl && "text-right",
+            rich && "[&_a]:text-primary [&_a]:underline",
+          )}
+        >
+          {rich ? renderHtml(value) : value}
+        </div>
+        {preview}
       </div>
     );
   }
