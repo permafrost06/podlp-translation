@@ -93,7 +93,7 @@ export default function App() {
     persistKey("show-untranslatable"),
     false,
   );
-  const [matchedOnly, setMatchedOnly] = usePersistentState(
+  const [matchedOnly] = usePersistentState(
     persistKey("matched-only"),
     false,
   );
