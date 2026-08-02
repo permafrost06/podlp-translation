@@ -13,6 +13,7 @@
     <string name="number_of_episodes">এপিসোড (%1$d)</string>
     <string name="load_all_episodes">সব এপিসোড লোড করুন</string>
     <string name="network_error">নেটওয়ার্ক সমস্যা</string>
+    <string name="no_network_connection">নেটওয়ার্ক কানেকশন নেই</string>
     <string name="menu">মেনু</string>
     <string name="today">আজ</string>
     <string name="yesterday">গতকাল</string>
@@ -82,6 +83,7 @@
     <string name="import_complete">%1$d টি পডকাস্টের মধ্যে %2$d টি সফলভাবে ইমপোর্ট হয়েছে</string>
     <string name="import_cancelled">ইমপোর্ট বাতিল হয়েছে</string>
     <string name="failed_imports">ইমপোর্ট ব্যর্থ:</string>
+    <string name="opml_export_failed">এক্সপোর্ট করা যায়নি</string>
     <string name="export_complete">%1$d টি পডকাস্ট এক্সপোর্ট হয়েছে</string>
     <string name="ok">ঠিক আছে</string>
     <string name="error">ত্রুটি</string>
@@ -99,6 +101,7 @@
     <string name="pause">পজ</string>
     <string name="resume">রিজিউম</string>
     <string name="update_available_message">পডএলপির একটি নতুন ভার্সন ইন্সটল করার জন্য এভেইলেবল আছে।</string>
+    <string name="update_downloaded_message">পডএলপির একটি নতুন ভার্সন ডাউনলোড হয়েছে এবং ইন্সটলের জন্য প্রস্তুত</string>
     <string name="download">ডাউনলোড</string>
     <string name="delete_episode">এপিসোড ডিলিট করুন</string>
     <string name="downloading">ডাউনলোড শুরু হয়েছে…</string>
@@ -106,6 +109,7 @@
     <string name="could_not_download_episode">%1$s ডাউনলোড করা যায়নি</string>
     <string name="download_complete">ডাউনলোড সম্পূর্ণ হয়ছে</string>
     <string name="episode_ready_to_play">%1$s প্লে করার জন্য প্রস্তুত</string>
+    <string name="episode">এপিসোড</string>
     <string name="auto_download">এপিসোড স্বয়ংক্রিয়ভাবে ডাউনলোড করুন</string>
     <string name="auto_download_description">সাবস্ক্রাইব করা পডকাস্টের সর্বশেষ এপিসোডগুলো স্বয়ংক্রিয়ভাবে ডাউনলোড করুন</string>
     <string name="episodes_to_retain">সংরক্ষিত এপিসোড সংখ্যা</string>
@@ -119,6 +123,7 @@
     <string name="exit">এক্সিট</string>
     <string name="play">প্লে</string>
     <string name="number_of_episodes_truncated">এপিসোড (%1$d+)</string>
+    <string name="sort_oldest_to_newest">পুরাতন থেকে নতুন</string>
     <string name="season">সিজন</string>
     <string name="all_episodes">সব এপিসোড</string>
     <string name="shortcut_search_long">পডকাস্ট খুঁজুন</string>
@@ -130,8 +135,8 @@
     <string name="clear_cache">ক্যাশ ক্লিয়ার করুন</string>
     <string name="clear_cache_description">ক্যাশ করা ছবি এবং ডাটা ক্লিয়ার করুন</string>
     <string name="create_contact_shortcut">কন্ট্যাক্ট শর্টকাট তৈরি করুন</string>
-    <string name="hardware_audit_report">হার্ডওয়্যার অডিট রিপোর্ট</string>
     <string name="update_available_title">আপডেট এভেইলেবল</string>
+    <string name="install">ইন্সটল</string>
     <string name="permission_denied_install_updates">আপডেট ইন্সটল করার পারমিশন নেই। সেটিংসে ইনেবল করুন।</string>
     <string name="podlp_update">পডএলপি আপডেট</string>
     <string name="downloading_new_version">পডএলপির নতুন ভার্সন ডাউনলোড করা হচ্ছে</string>
@@ -139,6 +144,7 @@
     <string name="update_download_failed_reason">আপডেট ডাউনলোড ব্যর্থ: %1$d</string>
     <string name="download_complete_installing">ডাউনলোড সম্পন্ন। আপডেট ইন্সটল হচ্ছে…</string>
     <string name="update_installed_successfully">আপডেট সফলভাবে ইন্সটল হয়েছে।</string>
+    <string name="up_to_date">আপনি আপডেটেড আছেন</string>
     <string name="whats_new">নতুন কী আছে</string>
     <string name="changelog">চেঞ্জলগ</string>
     <string name="privacy_policy">প্রাইভেসি পলিসি</string>
@@ -169,6 +175,7 @@
     <string name="funding">পডকাস্ট সমর্থন করুন</string>
     <string name="options">অপশন</string>
     <string name="not_supported">সমর্থিত নয়</string>
+    <string name="no_contacts_app_available">কোন কনট্যাক্ট এ্যাপ পাওয়া যায়নি</string>
     <string name="percentage_format">%1$d%%</string>
     <string name="speed_format">%1$sx</string>
     <string name="persistent_notification">শর্টকাট নোটিফিকেশন</string>
@@ -181,4 +188,25 @@
     <string name="storage_default">সিস্টেম ডিফল্ট</string>
     <string name="storage_internal">ইন্টার্নাল স্টোরেজ</string>
     <string name="storage_external">এক্সটার্নাল স্টোরেজ</string>
+    <string name="error_loading_podcast">পডকাস্ট লোড করা যায়নি</string>
+    <string name="category_not_found">ক্যাটাগরি পাওয়া যায়নি</string>
+    <string name="sort_default">ডিফল্ট</string>
+    <string name="sort_newest_to_oldest">নতুন থেকে পুরাতন</string>
+    <string name="opml_no_podcasts_found">OPML ফাইলে কোন পডকাস্ট পাওয়া যায়নি</string>
+    <string name="opml_import_failed">ইমপোর্ট করা যায়নি</string>
+    <string name="opml_no_subscriptions_to_export">এক্সপোর্ট করার মতো সাবস্ক্রিপশন নেই</string>
+    <string name="opml_could_not_retrieve_feed_urls">ফিড URL গুলো পাওয়া যায়নি</string>
+    <string name="check_for_updates">আপডেটের জন্য চেক করুন</string>
+    <string name="auto_delete">অটো-ডিলিট</string>
+    <string name="auto_delete_description">ডাউনলোড করা এপিসোড শোনার পর অটোমেটিক ডিলিট</string>
+    <string name="show_notes">শো নোটস</string>
+    <string name="podcast_description">পডকাস্ট ডেসক্রিপশন</string>
+    <string name="search_episodes">এপিসোড সার্চ</string>
+    <string name="unknown_episode">অজানা এপিসোড</string>
+    <string name="playback_network_error">নেটওয়ার্ক এরর। আপনার কানেকশন চেক করুন।</string>
+    <string name="playback_file_not_found">এপিসোড ফাইল পাওয়া যায়নি। আবার ডাউনলোড করুন এবং ট্রাই করুন।</string>
+    <string name="playback_format_unsupported">এই এপিসোড ফরম্যাট টি সাপোর্টেড না</string>
+    <string name="playback_download_corrupted">ডাউনলোড করা এপিসোডটি করাপ্টেড হতে পারে। আবার ডাউনলোড করে চেষ্টা করুন।</string>
+    <string name="playback_stream_unavailable">স্ট্রিম করা যাচ্ছে না। পরে আবার চেষ্টা করুন।</string>
+    <string name="playback_error">প্লেব্যাক এরর: %1$s</string>
 </resources>

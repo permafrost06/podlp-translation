@@ -12,6 +12,8 @@ export interface StringItem {
   cdata: boolean;
   multiline: boolean;
   translatable: boolean;
+  /** Source text is an exact match of the reference string list. */
+  matched?: boolean;
 }
 
 export interface ArrayItemSource {
@@ -25,6 +27,8 @@ export interface StringArrayItem {
   key: string;
   items: ArrayItemSource[];
   translatable: boolean;
+  /** Source text is an exact match of the reference string list. */
+  matched?: boolean;
 }
 
 export type SchemaItem = StringItem | StringArrayItem;

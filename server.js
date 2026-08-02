@@ -8,6 +8,7 @@ const cookieParser = require("cookie-parser");
 
 const strings = require("./lib/strings");
 const LANGUAGES = require("./lib/languages");
+const MATCHED_KEYS = require("./lib/matched-keys");
 const { createZip } = require("./lib/zip");
 
 // ---------------------------------------------------------------------------
@@ -28,6 +29,12 @@ const LANG_CODES = new Set(LANGUAGES.map((l) => l.code));
 // Load source schema
 // ---------------------------------------------------------------------------
 const SCHEMA = strings.parseFile(STRINGS_FILE);
+
+// Flag rows whose English source is an exact match of the reference string list
+// (see lib/matched-keys.js). Surfaced in the grid with a "matched" badge.
+for (const item of SCHEMA) {
+  item.matched = MATCHED_KEYS.has(item.key);
+}
 
 // ---------------------------------------------------------------------------
 // Data persistence: { [langCode]: { [key]: value | string[] } }

@@ -54,6 +54,7 @@ export default function App() {
   const [filter, setFilter] = useState("");
   const [untranslatedOnly, setUntranslatedOnly] = useState(false);
   const [showUntranslatable, setShowUntranslatable] = useState(false);
+  const [matchedOnly, setMatchedOnly] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [progress, setProgress] = useState<ProgressResponse>({
     total: 0,
@@ -199,6 +200,7 @@ export default function App() {
       // visibility is intentionally not user-toggleable.
       if (item.type === "string-array" && item.name === "changelog") return false;
       if (!showUntranslatable && !item.translatable) return false;
+      if (matchedOnly && !item.matched) return false;
       if (f) {
         const hay = (
           item.name +
@@ -217,6 +219,7 @@ export default function App() {
     filter,
     untranslatedOnly,
     showUntranslatable,
+    matchedOnly,
     isFullyTranslated,
     activeLang,
   ]);
@@ -387,6 +390,16 @@ export default function App() {
                 className="text-muted-foreground"
               >
                 Show untranslatable
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="matched-only"
+                checked={matchedOnly}
+                onCheckedChange={setMatchedOnly}
+              />
+              <Label htmlFor="matched-only" className="text-muted-foreground">
+                Matched only
               </Label>
             </div>
           </div>

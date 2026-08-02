@@ -162,6 +162,7 @@ type GridRow =
       cdata: boolean;
       multiline: boolean;
       translatable: boolean;
+      matched: boolean;
     }
   | {
       kind: "array-item";
@@ -172,6 +173,7 @@ type GridRow =
       source: string;
       multiline: boolean;
       translatable: boolean;
+      matched: boolean;
       firstOfGroup: boolean;
       groupSize: number;
     };
@@ -188,6 +190,7 @@ function flattenSchema(schema: SchemaItem[]): GridRow[] {
         cdata: item.cdata,
         multiline: item.multiline,
         translatable: item.translatable,
+        matched: !!item.matched,
       });
     } else {
       item.items.forEach((src, idx) => {
@@ -200,6 +203,7 @@ function flattenSchema(schema: SchemaItem[]): GridRow[] {
           source: src.value,
           multiline: src.value.length > 60 || /<br\s*\/?>/i.test(src.value),
           translatable: item.translatable,
+          matched: !!item.matched,
           firstOfGroup: idx === 0,
           groupSize: item.items.length,
         });
@@ -262,7 +266,9 @@ export function TranslationGrid({
         <tbody>
           {flattenSchema(schema).map((row, i) => (
             <Row
-              key={row.kind === "array-item" ? `${row.key}:${row.index}` : row.key}
+              key={
+                row.kind === "array-item" ? `${row.key}:${row.index}` : row.key
+              }
               row={row}
               rowIndex={i}
               languages={languages}
@@ -314,7 +320,9 @@ function Row({
   const sourceRich = isRich(row.source);
 
   function currentValue(t: Translations | undefined): string {
-    return isArrayItem ? arrValueOf(t, row.key, row.index) : valueOf(t, row.key);
+    return isArrayItem
+      ? arrValueOf(t, row.key, row.index)
+      : valueOf(t, row.key);
   }
   function change(value: string) {
     if (isArrayItem) onChangeArray(row.key, row.index, value, row.length);
@@ -335,6 +343,15 @@ function Row({
             {row.name}
           </span>
           <div className="flex flex-wrap gap-1">
+            {row.matched && (
+              <Badge
+                variant="secondary"
+                className="gap-1 border-emerald-500/30 bg-emerald-500/15 text-[10px] text-emerald-600 dark:text-emerald-400"
+                title="Source text exactly matches the reference string list"
+              >
+                match from old translation
+              </Badge>
+            )}
             {!row.translatable && (
               <Badge variant="secondary" className="gap-1 text-[10px]">
                 <Lock className="h-2.5 w-2.5" /> fixed
@@ -364,11 +381,7 @@ function Row({
         <SourceText value={row.source} />
         {formatArgs.length > 0 && (
           <>
-            <ArgInputs
-              args={formatArgs}
-              values={argValues}
-              onChange={setArg}
-            />
+            <ArgInputs args={formatArgs} values={argValues} onChange={setArg} />
             <FormatPreview
               text={row.source}
               values={argValues}
@@ -437,7 +450,10 @@ function StringCell({
 }) {
   const rich = isRich(source);
   const showPreview =
-    editable && argValues !== undefined && hasFormatArgs(source) && !!value.trim();
+    editable &&
+    argValues !== undefined &&
+    hasFormatArgs(source) &&
+    !!value.trim();
 
   const preview = showPreview ? (
     <FormatPreview
@@ -460,7 +476,7 @@ function StringCell({
         className={cn(
           "whitespace-pre-wrap break-words",
           rtl && "text-right",
-          rich && "[&_a]:text-primary [&_a]:underline"
+          rich && "[&_a]:text-primary [&_a]:underline",
         )}
       >
         {rich ? renderHtml(value) : value}
