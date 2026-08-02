@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "convex/react";
 import {
   Check,
   Download,
@@ -12,6 +13,8 @@ import {
 
 import {
   api,
+  convexApi,
+  getToken,
   type Language,
   type ProgressResponse,
   type SchemaItem,
@@ -49,8 +52,26 @@ type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 export default function App() {
   const [authed, setAuthed] = useState<boolean | null>(null);
-  const [languages, setLanguages] = useState<Language[]>([]);
-  const [schema, setSchema] = useState<SchemaItem[]>([]);
+
+  // ---- live (reactive) queries ----
+  // When not authed we pass "skip" so the queries don't run. The token is a
+  // reactive arg: on login/logout the subscriptions re-run with the new value.
+  const token = authed ? getToken() : undefined;
+  const queryArgs = authed && token ? { token } : "skip";
+  const schemaData = useQuery(convexApi.translations.schema, queryArgs);
+  const allData = useQuery(convexApi.translations.all, queryArgs);
+  const progressData = useQuery(convexApi.translations.progress, queryArgs);
+
+  const languages: Language[] = schemaData?.languages ?? [];
+  const schema: SchemaItem[] = schemaData?.schema ?? [];
+  const progress: ProgressResponse = progressData ?? {
+    total: 0,
+    byLanguage: {},
+  };
+
+  // Locally-editable copy of the translations. It's seeded from the live
+  // `all` query and re-merged whenever the server pushes an update, but keeps
+  // any not-yet-saved (dirty) keys so in-flight edits aren't clobbered.
   const [allTranslations, setAllTranslations] = useState<
     Record<string, Translations>
   >({});
@@ -77,14 +98,9 @@ export default function App() {
     false,
   );
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
-  const [progress, setProgress] = useState<ProgressResponse>({
-    total: 0,
-    byLanguage: {},
-  });
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewText, setPreviewText] = useState("");
 
-  const dirtyRef = useRef<Set<string>>(new Set());
   const saveTimer = useRef<number | null>(null);
   const allRef = useRef<Record<string, Translations>>({});
   allRef.current = allTranslations;
@@ -99,17 +115,11 @@ export default function App() {
       .catch(() => setAuthed(false));
   }, []);
 
-  // ---- load everything once authed ----
-  const bootstrap = useCallback(async () => {
-    const [{ languages, schema }, { translations }, prog] = await Promise.all([
-      api.schema(),
-      api.allTranslations(),
-      api.progress(),
-    ]);
-    setLanguages(languages);
-    setSchema(schema);
-    setAllTranslations(translations);
-    setProgress(prog);
+  // ---- restore column visibility + active language once the schema loads ----
+  const restoredRef = useRef(false);
+  useEffect(() => {
+    if (restoredRef.current || languages.length === 0) return;
+    restoredRef.current = true;
 
     const codes = new Set(languages.map((l) => l.code));
     // Restore previously visible columns, but only keep languages that still
@@ -129,11 +139,35 @@ export default function App() {
     setActiveLang((cur) =>
       cur && codes.has(cur) ? cur : languages[0]?.code || "",
     );
-  }, [setActiveLang]);
+  }, [languages, setActiveLang]);
 
+  // ---- merge live server translations into the editable local copy ----
+  // Whenever the reactive `all` query pushes new data (either our own save
+  // landing or another translator editing), fold it into local state — but keep
+  // any keys we haven't saved yet (tracked in dirtyRef) so live pushes never
+  // clobber an in-flight edit.
+  const dirtyRef = useRef<Set<string>>(new Set());
   useEffect(() => {
-    if (authed) bootstrap();
-  }, [authed, bootstrap]);
+    if (!allData) return;
+    const server = allData.translations;
+    const dirty = dirtyRef.current;
+    const lang = activeRef.current;
+    setAllTranslations((prev) => {
+      const next: Record<string, Translations> = {};
+      for (const code of Object.keys(server)) {
+        if (code === lang && dirty.size) {
+          // Preserve unsaved edits for the language currently being edited.
+          const merged: Translations = { ...server[code] };
+          const prevLang = prev[code] || {};
+          for (const key of dirty) merged[key] = prevLang[key];
+          next[code] = merged;
+        } else {
+          next[code] = server[code];
+        }
+      }
+      return next;
+    });
+  }, [allData]);
 
   // Persist the visible column selection (stored as an array). Skip the empty
   // initial state so we don't clobber the saved value before bootstrap runs.
@@ -150,14 +184,8 @@ export default function App() {
   }, [visibleLangs]);
 
   // ---- saving (writes to active language) ----
-  const refreshProgress = useCallback(async () => {
-    try {
-      setProgress(await api.progress());
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
+  // Progress and the grid update reactively via the live `all`/`progress`
+  // queries once the mutation lands — no manual refetch needed.
   const flushSave = useCallback(async () => {
     const keys = Array.from(dirtyRef.current);
     if (!keys.length) return;
@@ -169,12 +197,11 @@ export default function App() {
     try {
       await api.saveTranslations(lang, payload);
       setSaveStatus("saved");
-      refreshProgress();
     } catch (e) {
       if (e instanceof api.UnauthorizedError) setAuthed(false);
       else setSaveStatus("error");
     }
-  }, [refreshProgress]);
+  }, []);
 
   const queueSave = useCallback(
     (key: string) => {

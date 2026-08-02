@@ -1,5 +1,7 @@
-import { ConvexClient } from "convex/browser";
+import { ConvexReactClient } from "convex/react";
 import { api as convexApi } from "../../convex/_generated/api";
+
+export { convexApi };
 
 export interface Language {
   code: string;
@@ -60,10 +62,13 @@ const SITE_URL = CONVEX_URL
   ? CONVEX_URL.replace(/\.convex\.cloud$/, ".convex.site")
   : "";
 
-const client = new ConvexClient(CONVEX_URL);
+// A single ConvexReactClient powers both the reactive `useQuery` hooks (via
+// <ConvexProvider>) and the imperative calls below (client.query/mutation/action).
+export const convex = new ConvexReactClient(CONVEX_URL);
+const client = convex;
 
 const TOKEN_KEY = "podlp-auth-token";
-function getToken(): string | undefined {
+export function getToken(): string | undefined {
   return localStorage.getItem(TOKEN_KEY) || undefined;
 }
 function setToken(token: string | null) {
