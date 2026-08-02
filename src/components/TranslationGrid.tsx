@@ -133,6 +133,7 @@ interface TranslationGridProps {
     value: string,
     length: number,
   ) => void;
+  showAllLanguages?: boolean;
 }
 
 function valueOf(t: Translations | undefined, key: string): string {
@@ -220,6 +221,7 @@ export function TranslationGrid({
   onSetActiveLang,
   onChangeString,
   onChangeArray,
+  showAllLanguages = true,
 }: TranslationGridProps) {
   return (
     <div className="h-full overflow-auto rounded-lg border">
@@ -238,6 +240,11 @@ export function TranslationGrid({
                 <th
                   key={l.code}
                   onClick={() => onSetActiveLang(l.code)}
+                  style={
+                    active && !showAllLanguages
+                      ? { minWidth: "30vw" }
+                      : undefined
+                  }
                   className={cn(
                     "grid-head-cell sticky top-0 z-30 min-w-[240px] cursor-pointer border-b border-r px-3 py-2 text-left font-medium",
                     active

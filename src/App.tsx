@@ -52,6 +52,7 @@ export default function App() {
   const [activeLang, setActiveLang] = useState<string>("");
   const [visibleLangs, setVisibleLangs] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState("");
+  const [showAllLanguages, setShowAllLanguages] = useState(false);
   const [untranslatedOnly, setUntranslatedOnly] = useState(false);
   const [showUntranslatable, setShowUntranslatable] = useState(false);
   const [matchedOnly, setMatchedOnly] = useState(false);
@@ -226,8 +227,11 @@ export default function App() {
   ]);
 
   const shownLanguages = useMemo(
-    () => languages.filter((l) => visibleLangs.has(l.code)),
-    [languages, visibleLangs],
+    () =>
+      showAllLanguages
+        ? languages.filter((l) => visibleLangs.has(l.code))
+        : languages.filter((l) => l.code === activeLang),
+    [languages, visibleLangs, showAllLanguages, activeLang],
   );
 
   // ---- column toggles ----
@@ -332,37 +336,54 @@ export default function App() {
 
         {/* Column toggles + filters */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t px-4 py-2">
-          <span className="text-sm font-medium text-muted-foreground">
-            Columns:
-          </span>
-          {languages.map((l) => {
-            const checked = visibleLangs.has(l.code);
-            const isActive = l.code === activeLang;
-            const p = progress.byLanguage[l.code];
-            return (
-              <span
-                key={l.code}
-                className={cnLabel(isActive)}
-                title={isActive ? "Active column (can't hide)" : undefined}
-                onClick={() => {
-                  if (!isActive) toggleLang(l.code);
-                }}
-                style={{ cursor: isActive ? "default" : "pointer" }}
-              >
-                <Checkbox
-                  checked={checked}
-                  disabled={isActive}
-                  onCheckedChange={() => {}}
-                />
-                <span>{l.name}</span>
-                {p && (
-                  <span className="text-xs text-muted-foreground">
-                    {Math.round((p.done / (p.total || 1)) * 100)}%
-                  </span>
-                )}
+          <div className="flex items-center gap-2">
+            <Switch
+              id="show-all-languages"
+              checked={showAllLanguages}
+              onCheckedChange={setShowAllLanguages}
+            />
+            <Label
+              htmlFor="show-all-languages"
+              className="text-muted-foreground"
+            >
+              Show all languages
+            </Label>
+          </div>
+          {showAllLanguages && (
+            <>
+              <span className="text-sm font-medium text-muted-foreground">
+                Columns:
               </span>
-            );
-          })}
+              {languages.map((l) => {
+                const checked = visibleLangs.has(l.code);
+                const isActive = l.code === activeLang;
+                const p = progress.byLanguage[l.code];
+                return (
+                  <span
+                    key={l.code}
+                    className={cnLabel(isActive)}
+                    title={isActive ? "Active column (can't hide)" : undefined}
+                    onClick={() => {
+                      if (!isActive) toggleLang(l.code);
+                    }}
+                    style={{ cursor: isActive ? "default" : "pointer" }}
+                  >
+                    <Checkbox
+                      checked={checked}
+                      disabled={isActive}
+                      onCheckedChange={() => {}}
+                    />
+                    <span>{l.name}</span>
+                    {p && (
+                      <span className="text-xs text-muted-foreground">
+                        {Math.round((p.done / (p.total || 1)) * 100)}%
+                      </span>
+                    )}
+                  </span>
+                );
+              })}
+            </>
+          )}
 
           <div className="ml-auto flex flex-wrap items-center gap-3">
             <div className="relative">
@@ -429,6 +450,7 @@ export default function App() {
             onSetActiveLang={handleSetActiveLang}
             onChangeString={onChangeString}
             onChangeArray={onChangeArray}
+            showAllLanguages={showAllLanguages}
           />
         )}
       </main>
