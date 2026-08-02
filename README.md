@@ -19,19 +19,16 @@ Hindi, Tamil, Telugu, Malayalam, Kannada, Marathi, Gujarati, Odia, Urdu.
 
 ## Features
 
-- **Password gate** — single shared password (`TRANSLATOR_PASSWORD`).
-- **Text field for single-line, textarea for multiline** strings, including
-  every item in the `changelog` string-array.
-- **Source shown for reference**, with `%1$s` / `%d`-style placeholders
-  highlighted and validated (warns if a translation drops/adds a placeholder).
-- **HTML-bearing strings** (CDATA, e.g. `about_text`) are preserved verbatim —
-  the tool keeps the markup and re-wraps output in CDATA.
-- **Non-translatable strings** (brand names, URLs, pure format strings like
-  `%.1fGB`) are shown read-only and copied through unchanged.
-- **Autosave** to the Convex database; nothing is lost on refresh.
-- **RTL editing** for Urdu.
-- **Download** one language's `strings.xml`, or **all** as a ZIP laid out as
-  `values-<code>/strings.xml` ready to drop into `app/src/main/res/`.
+- **Single shared password** - best auth solution for this one-time
+  project with many non-techie translators, less hassle since no per-user
+  accounts to manage.
+- **Preview for strings with args** - strings with placeholders replaced
+  by a sample changeable value, and warns if a placeholder goes missing.
+- **Rich-text editing** converted to HTML under the hood and wrapped in CDATA
+  as needed.
+- **Convex live updates and stats** — track translation progress live.
+- **Generate all required XML files easily** — one language or all of them at
+  once.
 
 ## Stack
 
