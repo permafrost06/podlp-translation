@@ -12,11 +12,6 @@ valid Android `strings.xml` files from their submissions.
 
 ![Screenshot of the PodLP Translation tool](screenshots/screenshot-app.png)
 
-## Target languages
-
-Hindi, Tamil, Telugu, Malayalam, Kannada, Marathi, Gujarati, Odia, Urdu.
-(Edit `convex/lib/languages.ts` to add/remove.)
-
 ## Features
 
 - **Single shared password** - best auth solution for this one-time
