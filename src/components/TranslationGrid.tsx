@@ -349,15 +349,6 @@ function Row({
             {row.name}
           </span>
           <div className="flex flex-wrap gap-1">
-            {row.matched && (
-              <Badge
-                variant="secondary"
-                className="gap-1 border-emerald-500/30 bg-emerald-500/15 text-[10px] text-emerald-600 dark:text-emerald-400"
-                title="Source text exactly matches the reference string list"
-              >
-                match from old translation
-              </Badge>
-            )}
             {!row.translatable && (
               <Badge variant="secondary" className="gap-1 text-[10px]">
                 <Lock className="h-2.5 w-2.5" /> fixed

@@ -501,16 +501,6 @@ export default function App() {
                 Show untranslatable
               </Label>
             </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                id="matched-only"
-                checked={matchedOnly}
-                onCheckedChange={setMatchedOnly}
-              />
-              <Label htmlFor="matched-only" className="text-muted-foreground">
-                Matched only
-              </Label>
-            </div>
           </div>
         </div>
       </header>
