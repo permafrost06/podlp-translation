@@ -12,8 +12,6 @@ valid Android `strings.xml` files from their submissions.
 
 ![Screenshot of the PodLP Translation tool](screenshots/screenshot-app.png)
 
-![Screenshot of the strings.xml preview](screenshots/screenshot-preview.png)
-
 ## Target languages
 
 Hindi, Tamil, Telugu, Malayalam, Kannada, Marathi, Gujarati, Odia, Urdu.
