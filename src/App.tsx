@@ -17,6 +17,11 @@ import {
   type SchemaItem,
   type Translations,
 } from "@/lib/api";
+import {
+  persistKey,
+  readPersisted,
+  usePersistentState,
+} from "@/lib/use-persistent-state";
 import { LoginView } from "@/components/LoginView";
 import { TranslationGrid } from "@/components/TranslationGrid";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -49,13 +54,28 @@ export default function App() {
   const [allTranslations, setAllTranslations] = useState<
     Record<string, Translations>
   >({});
-  const [activeLang, setActiveLang] = useState<string>("");
+  const [activeLang, setActiveLang] = usePersistentState<string>(
+    persistKey("active-lang"),
+    "",
+  );
   const [visibleLangs, setVisibleLangs] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState("");
-  const [showAllLanguages, setShowAllLanguages] = useState(false);
-  const [untranslatedOnly, setUntranslatedOnly] = useState(false);
-  const [showUntranslatable, setShowUntranslatable] = useState(false);
-  const [matchedOnly, setMatchedOnly] = useState(false);
+  const [showAllLanguages, setShowAllLanguages] = usePersistentState(
+    persistKey("show-all-languages"),
+    false,
+  );
+  const [untranslatedOnly, setUntranslatedOnly] = usePersistentState(
+    persistKey("untranslated-only"),
+    false,
+  );
+  const [showUntranslatable, setShowUntranslatable] = usePersistentState(
+    persistKey("show-untranslatable"),
+    false,
+  );
+  const [matchedOnly, setMatchedOnly] = usePersistentState(
+    persistKey("matched-only"),
+    false,
+  );
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [progress, setProgress] = useState<ProgressResponse>({
     total: 0,
@@ -90,13 +110,44 @@ export default function App() {
     setSchema(schema);
     setAllTranslations(translations);
     setProgress(prog);
-    setVisibleLangs(new Set(languages.map((l) => l.code)));
-    setActiveLang((cur) => cur || languages[0]?.code || "");
-  }, []);
+
+    const codes = new Set(languages.map((l) => l.code));
+    // Restore previously visible columns, but only keep languages that still
+    // exist; fall back to showing everything on first visit.
+    const savedVisible = readPersisted<string[] | null>(
+      persistKey("visible-langs"),
+      null,
+    );
+    const restoredVisible =
+      savedVisible && savedVisible.length
+        ? new Set(savedVisible.filter((c) => codes.has(c)))
+        : new Set(codes);
+    if (restoredVisible.size === 0) for (const c of codes) restoredVisible.add(c);
+    setVisibleLangs(restoredVisible);
+
+    // Restore the active language if it's still valid, otherwise pick the first.
+    setActiveLang((cur) =>
+      cur && codes.has(cur) ? cur : languages[0]?.code || "",
+    );
+  }, [setActiveLang]);
 
   useEffect(() => {
     if (authed) bootstrap();
   }, [authed, bootstrap]);
+
+  // Persist the visible column selection (stored as an array). Skip the empty
+  // initial state so we don't clobber the saved value before bootstrap runs.
+  useEffect(() => {
+    if (visibleLangs.size === 0) return;
+    try {
+      localStorage.setItem(
+        persistKey("visible-langs"),
+        JSON.stringify(Array.from(visibleLangs)),
+      );
+    } catch {
+      /* ignore */
+    }
+  }, [visibleLangs]);
 
   // ---- saving (writes to active language) ----
   const refreshProgress = useCallback(async () => {
